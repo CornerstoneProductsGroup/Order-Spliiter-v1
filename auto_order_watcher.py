@@ -307,7 +307,6 @@ def main() -> int:
     index_path = retailer_root / ".processed_pdfs.json"
     processed = read_index(index_path)
 
-    now_ts = time.time()
     if not args.include_existing:
         seeded = 0
         for pdf in discover_pdfs(watch_dir):
@@ -333,13 +332,12 @@ def main() -> int:
 
     def _eligible(pdf: Path) -> bool:
         try:
-            age = now_ts - pdf.stat().st_mtime
+            age = time.time() - pdf.stat().st_mtime
             return age >= args.min_file_age_seconds
         except FileNotFoundError:
             return False
 
     while True:
-        cycle_now = time.time()
         processed_any = False
         for pdf in discover_pdfs(watch_dir):
             key = str(pdf.resolve())
@@ -374,8 +372,6 @@ def main() -> int:
         if args.once:
             break
 
-        # Update reference time once per loop to keep min-age checks stable.
-        now_ts = cycle_now
         if not processed_any:
             time.sleep(args.poll_seconds)
 
